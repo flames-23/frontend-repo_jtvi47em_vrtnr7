@@ -1,54 +1,62 @@
 import React from 'react';
 
-export default function TransactionTable({ data, onRemove }) {
-  const totalWeight = data.reduce((sum, r) => sum + r.weight, 0);
-  const grandTotal = data.reduce((sum, r) => sum + r.total, 0);
+const currency = (n) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(n || 0);
+
+const TransactionTable = ({ items, onDelete }) => {
+  const totalWeight = items.reduce((s, it) => s + (Number(it.weight) || 0), 0);
+  const grandTotal = items.reduce((s, it) => s + (Number(it.total) || 0), 0);
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-emerald-200 bg-white shadow-sm">
-      <table className="min-w-full divide-y divide-gray-200">
-        <thead className="bg-emerald-50">
-          <tr>
-            <th className="px-4 py-3 text-left text-sm font-semibold text-emerald-900">Tanggal</th>
-            <th className="px-4 py-3 text-left text-sm font-semibold text-emerald-900">Penyetor</th>
-            <th className="px-4 py-3 text-left text-sm font-semibold text-emerald-900">Jenis</th>
-            <th className="px-4 py-3 text-right text-sm font-semibold text-emerald-900">Berat (kg)</th>
-            <th className="px-4 py-3 text-right text-sm font-semibold text-emerald-900">Harga/kg</th>
-            <th className="px-4 py-3 text-right text-sm font-semibold text-emerald-900">Total (Rp)</th>
-            <th className="px-4 py-3" />
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-gray-100">
-          {data.length === 0 ? (
-            <tr>
-              <td colSpan="7" className="px-4 py-6 text-center text-gray-500">Belum ada transaksi</td>
+    <div className="rounded-xl border border-green-200 bg-white p-4 shadow-sm">
+      <h3 className="mb-4 font-semibold text-green-900">Daftar Transaksi</h3>
+      <div className="overflow-x-auto">
+        <table className="min-w-full text-sm">
+          <thead>
+            <tr className="bg-green-50 text-green-900">
+              <th className="px-3 py-2 text-left">Tanggal</th>
+              <th className="px-3 py-2 text-left">Nasabah</th>
+              <th className="px-3 py-2 text-left">Material</th>
+              <th className="px-3 py-2 text-right">Berat (kg)</th>
+              <th className="px-3 py-2 text-right">Harga/kg</th>
+              <th className="px-3 py-2 text-right">Total</th>
+              {onDelete && <th className="px-3 py-2"></th>}
             </tr>
-          ) : (
-            data.map((row, idx) => (
-              <tr key={idx} className="hover:bg-emerald-50/40">
-                <td className="px-4 py-3 text-gray-700">{row.date}</td>
-                <td className="px-4 py-3 text-gray-700">{row.customer}</td>
-                <td className="px-4 py-3 text-gray-700">{row.material}</td>
-                <td className="px-4 py-3 text-right tabular-nums text-gray-700">{row.weight.toFixed(2)}</td>
-                <td className="px-4 py-3 text-right tabular-nums text-gray-700">{Number(row.price).toLocaleString('id-ID')}</td>
-                <td className="px-4 py-3 text-right tabular-nums font-semibold text-emerald-700">{Number(row.total).toLocaleString('id-ID')}</td>
-                <td className="px-4 py-3 text-right">
-                  <button onClick={() => onRemove(idx)} className="text-sm text-red-600 hover:underline">Hapus</button>
-                </td>
+          </thead>
+          <tbody>
+            {items.map((it, idx) => (
+              <tr key={idx} className="border-t">
+                <td className="px-3 py-2">{it.date}</td>
+                <td className="px-3 py-2">{it.customer}</td>
+                <td className="px-3 py-2">{it.material}</td>
+                <td className="px-3 py-2 text-right">{Number(it.weight).toFixed(2)}</td>
+                <td className="px-3 py-2 text-right">{currency(it.price)}</td>
+                <td className="px-3 py-2 text-right">{currency(it.total)}</td>
+                {onDelete && (
+                  <td className="px-3 py-2 text-right">
+                    <button
+                      onClick={() => onDelete(idx)}
+                      className="text-red-600 hover:underline"
+                    >
+                      Hapus
+                    </button>
+                  </td>
+                )}
               </tr>
-            ))
-          )}
-        </tbody>
-        <tfoot className="bg-emerald-50">
-          <tr>
-            <td className="px-4 py-3 text-sm font-medium text-emerald-900" colSpan="3">Total</td>
-            <td className="px-4 py-3 text-right tabular-nums text-sm font-medium text-emerald-900">{totalWeight.toFixed(2)}</td>
-            <td />
-            <td className="px-4 py-3 text-right tabular-nums text-sm font-bold text-emerald-900">{grandTotal.toLocaleString('id-ID')}</td>
-            <td />
-          </tr>
-        </tfoot>
-      </table>
+            ))}
+          </tbody>
+          <tfoot>
+            <tr className="border-t font-semibold">
+              <td className="px-3 py-2" colSpan={3}>Total</td>
+              <td className="px-3 py-2 text-right">{totalWeight.toFixed(2)}</td>
+              <td className="px-3 py-2 text-right">—</td>
+              <td className="px-3 py-2 text-right">{currency(grandTotal)}</td>
+              {onDelete && <td></td>}
+            </tr>
+          </tfoot>
+        </table>
+      </div>
     </div>
   );
-}
+};
+
+export default TransactionTable;
