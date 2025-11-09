@@ -110,7 +110,20 @@ function Dashboard() {
     amount: rows.reduce((s, r) => s + r.total, 0),
   }), [rows]);
 
-  const handleAdd = (row) => setRows((prev) => [row, ...prev]);
+  const handleAdd = async (row) => {
+    setRows((prev) => [row, ...prev]);
+    // Optional: persist to backend
+    try {
+      const base = import.meta.env.VITE_BACKEND_URL?.replace(/\/$/, '') || '';
+      await fetch(`${base}/transactions`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ date: row.date, customer: row.customer, material: row.material, weight: row.weight, price: row.price })
+      });
+    } catch (e) {
+      // ignore demo error
+    }
+  };
   const handleRemove = (idx) => setRows((prev) => prev.filter((_, i) => i !== idx));
   const handleExport = () => exportStyledExcel('Pembukuan-Bank-Sampah-Sekawan-Makmur', rows, { logoDataUrl: logo });
 

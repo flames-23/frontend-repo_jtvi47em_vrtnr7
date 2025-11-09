@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 export default function Login() {
   const [form, setForm] = useState({ nik: '', password: '', role: 'warga' });
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
   const handleChange = (e) => {
@@ -12,19 +13,34 @@ export default function Login() {
     setForm((p) => ({ ...p, [name]: value }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setError('');
     if (!form.nik || !form.password) {
       setError('Silakan isi NIK dan kata sandi.');
       return;
     }
-    // Demo auth: accept any input and store role; in production, validate via backend
-    localStorage.setItem('bssm_auth', JSON.stringify({ nik: form.nik, role: form.role }));
-    // Reset tour on first login for this user
-    if (!localStorage.getItem('bssm_tour_seen')) {
-      // leave as not seen so tour will show
+    setLoading(true);
+    try {
+      const base = import.meta.env.VITE_BACKEND_URL?.replace(/\/$/, '') || '';
+      const res = await fetch(`${base}/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nik: form.nik, password: form.password })
+      });
+      if (!res.ok) {
+        const j = await res.json().catch(() => ({}));
+        throw new Error(j.detail || 'Gagal masuk. Periksa kredensial.');
+      }
+      const data = await res.json();
+      // Simpan profil + token. Role dari backend menggantikan pilihan lokal.
+      localStorage.setItem('bssm_auth', JSON.stringify({ nik: data.nik, name: data.name, role: data.role, token: data.token }));
+      navigate('/');
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
     }
-    navigate('/');
   };
 
   return (
@@ -55,10 +71,11 @@ export default function Login() {
               <option value="pengurus">Pengurus</option>
               <option value="admin">Admin</option>
             </select>
+            <p className="mt-1 text-xs text-gray-500">Peran akhir mengikuti data akun di server.</p>
           </div>
           {error && <p className="text-sm text-red-600">{error}</p>}
-          <button type="submit" className="flex w-full items-center justify-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 font-medium text-white hover:bg-emerald-700">
-            <LockKeyhole className="h-4 w-4" /> Masuk
+          <button type="submit" disabled={loading} className="flex w-full items-center justify-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 font-medium text-white hover:bg-emerald-700 disabled:opacity-60">
+            <LockKeyhole className="h-4 w-4" /> {loading ? 'Memproses...' : 'Masuk'}
           </button>
           <p className="text-center text-xs text-gray-500">Akses khusus warga/pengurus Sekawan Makmur</p>
         </form>
